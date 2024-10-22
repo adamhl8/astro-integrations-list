@@ -24,8 +24,13 @@ const integrations = await getIntegrations()
             <a href={integration.link} target="_blank">
               {integration.name}
             </a>
+            {integration.isOfficial && (
+              <span style="color: var(--color-secondary); border: 1px solid var(--color-secondary); border-radius: 9999px; padding: 1px 8px; font-size: 0.75rem; font-weight: 600; margin: 0px 8px 0px 6px;">
+                Official
+              </span>
+            )}
             <span>| {integration.downloadsText} downloads</span>
-            <p>{integration.description}</p>
+            <p style="margin-left: 1rem; margin-top: 0.5rem;">{integration.description}</p>
           </li>
         ))
       }
