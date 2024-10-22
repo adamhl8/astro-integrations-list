@@ -4,10 +4,11 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "build": "bun lint && curl -Lo ./src/mvp.css https://andybrewer.github.io/mvp/mvp.css && astro build",
+    "build": "bun lint && astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "lint": "astro check && tsc --noEmit && prettier --write . && biome check --write . && eslint ."
+    "lint": "astro check && tsc --noEmit && prettier --write . && biome check --write . && eslint .",
+    "update-mvp-css": "curl -Lo ./src/mvp.css https://andybrewer.github.io/mvp/mvp.css"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
