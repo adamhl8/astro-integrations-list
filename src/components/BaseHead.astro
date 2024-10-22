@@ -1,4 +1,6 @@
 ---
+import "../mvp.css"
+
 const canonicalURL = new URL(Astro.url.pathname, Astro.site)
 ---
 
@@ -6,8 +8,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site)
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <meta name="generator" content={Astro.generator} />
-
-<link rel="stylesheet" href="https://unpkg.com/mvp.css" />
 
 <link rel="canonical" href={canonicalURL} />
 
