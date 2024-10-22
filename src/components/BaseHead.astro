@@ -1,0 +1,16 @@
+---
+const canonicalURL = new URL(Astro.url.pathname, Astro.site)
+---
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<meta name="generator" content={Astro.generator} />
+
+<link rel="stylesheet" href="https://unpkg.com/mvp.css" />
+
+<link rel="canonical" href={canonicalURL} />
+
+<title>Astro Integrations List</title>
+<meta name="title" content="Astro Integrations List" />
+<meta name="description" content="A list of all Astro integrations, sorted by downloads." />
