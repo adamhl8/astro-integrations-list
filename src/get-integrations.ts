@@ -1,4 +1,6 @@
 import * as cheerio from "cheerio"
+import numbro from "numbro"
+import { attempt, type error, fmtError } from "./utils.ts"
 
 interface Integration {
   name: string
@@ -34,54 +36,76 @@ const devData: Integration[] = [
     downloads: 200,
     isOfficial: false,
   },
+  {
+    name: "astro-integration-4",
+    description: "Description 4",
+    link: "https://example.com",
+    downloadsText: "1",
+    downloads: 1,
+    isOfficial: false,
+  },
 ]
 
-function parseDownloads(downloadsText: string): number {
-  let multiplier = 1
-  if (downloadsText.endsWith("K")) multiplier = 1_000
-  else if (downloadsText.endsWith("M")) multiplier = 1_000_000
-  const downloads = downloadsText.slice(0, -1)
-  return Number.parseFloat(downloads) * multiplier
+function parseDownloads(downloadsText: string): [number, error] {
+  const [downloads, error] = attempt(() => numbro.unformat(downloadsText.toLowerCase()))
+  if (error) return [-1, fmtError(`failed to unformat ${downloadsText}`, error)]
+  if (typeof downloads !== "number") return [-1, fmtError(`not a number after unformatting ${downloadsText}`)]
+  return [downloads, undefined]
 }
 
-async function getIntegrations() {
-  if (import.meta.env.DEV) return devData
+async function getIntegrations(): Promise<[Integration[], error]> {
+  if (import.meta.env.DEV) return [devData, undefined]
 
-  const integrations: Integration[] = []
   const baseUrl = "https://astro.build/integrations"
 
+  const pages: string[] = []
   for (let page = 1; ; page++) {
     const url = `${baseUrl}/${page > 1 ? `${page.toString()}/` : ""}`
-    try {
-      const response = await fetch(url, { redirect: "manual" })
-      if (response.status === 302) break
 
-      const html = await response.text()
-      const $ = cheerio.load(html)
+    const [response, error] = await attempt(() => fetch(url, { redirect: "manual" }))
+    if (error) return [[], fmtError(`failed to fetch ${url}`, error)]
+    if (response.status === 302) break
+    if (!response.ok) return [[], fmtError(`got ${response.status.toString()} from ${url}`)]
 
-      $("article.panel").each((_, element) => {
-        const article = $(element)
-        const integration = article.find("a")
-        const link = integration.attr("href") ?? ""
+    const html = await response.text()
+    pages.push(html)
+  }
 
-        const header = integration.find("h3")
-        const name = header.contents().first().text().trim()
-        const isOfficial = header.find("span").text().trim() === "Official"
-
-        const description = integration.find("p").text().trim()
-        const downloadsText = integration.find("div > span").first().text().trim()
-        const downloads = parseDownloads(downloadsText)
-
-        integrations.push({ name, description, link, downloadsText, downloads, isOfficial })
-      })
-    } catch (error) {
-      console.error(`Error fetching ${url}:`, error)
-      break
-    }
+  const integrations: Integration[] = []
+  for (const html of pages) {
+    const [pageIntegrations, error] = processPage(html)
+    if (error) return [[], fmtError("failed to process page", error)]
+    integrations.push(...pageIntegrations)
   }
 
   integrations.sort((a, b) => b.downloads - a.downloads)
-  return integrations
+  return [integrations, undefined]
+}
+
+function processPage(html: string): [Integration[], error] {
+  const $ = cheerio.load(html)
+
+  const integrations: Integration[] = []
+  const panels = $("article.panel").toArray()
+  for (const panel of panels) {
+    const article = $(panel)
+    const integration = article.find("a")
+    const link = integration.attr("href") ?? ""
+
+    const header = integration.find("h3")
+    const name = header.contents().first().text().trim()
+    const isOfficial = header.find("span").text().trim() === "Official"
+
+    const description = integration.find("p").text().trim()
+
+    const downloadsText = integration.find("div > span").first().text().trim()
+    const [downloads, error] = parseDownloads(downloadsText)
+    if (error) return [[], fmtError(`failed to parse downloads for ${name}`, error)]
+
+    integrations.push({ name, description, link, downloadsText, downloads, isOfficial })
+  }
+
+  return [integrations, undefined]
 }
 
 export { getIntegrations }

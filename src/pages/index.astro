@@ -2,7 +2,8 @@
 import BaseHead from "../components/BaseHead.astro"
 import { getIntegrations } from "../get-integrations.ts"
 
-const integrations = await getIntegrations()
+const [integrations, error] = await getIntegrations()
+if (error) throw error
 ---
 
 <!doctype html>
@@ -29,7 +30,9 @@ const integrations = await getIntegrations()
                 Official
               </span>
             )}
-            <span>| {integration.downloadsText} downloads</span>
+            <span>
+              | {integration.downloadsText} {integration.downloads === 1 ? "download" : "downloads"}
+            </span>
             <p style="margin-left: 1rem; margin-top: 0.5rem;">{integration.description}</p>
           </li>
         ))
